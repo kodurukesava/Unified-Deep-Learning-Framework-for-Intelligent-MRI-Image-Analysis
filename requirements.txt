@@ -1,0 +1,10 @@
+flask
+torch
+torchvision
+numpy
+pillow
+matplotlib
+scikit-learn
+werkzeug
+groq
+python-dotenv

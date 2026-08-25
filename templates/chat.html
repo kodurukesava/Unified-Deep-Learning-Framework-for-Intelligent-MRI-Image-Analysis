@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MRI AI Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+            min-height: 100vh;
+        }
+
+        .page {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* LEFT SIDE */
+        .left-side {
+            width: 61%;
+            padding: 70px;
+            background: #f4f7fb;
+        }
+
+        .left-side h1 {
+            font-size: 48px;
+            margin-bottom: 50px;
+            color: #111827;
+        }
+
+        .prediction-card {
+            background: white;
+            border-radius: 22px;
+            padding: 45px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .prediction-card h2 {
+            margin-top: 0;
+            font-size: 32px;
+            color: #111827;
+        }
+
+        .prediction-card p {
+            font-size: 22px;
+            color: #111827;
+            margin: 25px 0;
+        }
+
+        .prediction-card strong {
+            font-weight: 700;
+        }
+
+        /* RIGHT SIDE */
+        .assistant {
+            width: 39%;
+            min-height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #ddd;
+        }
+
+        /* HEADER */
+        .assistant-header {
+            background: linear-gradient(135deg, #2563eb, #2f66e8);
+            color: white;
+            padding: 25px 35px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .robot-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            flex-shrink: 0;
+        }
+
+        .assistant-title {
+            flex: 1;
+        }
+
+        .assistant-title h2 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .assistant-title p {
+            margin: 5px 0 0;
+            font-size: 16px;
+        }
+
+        /* CHAT */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .welcome-message {
+            background: #eef2ff;
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #111827;
+        }
+
+        .user-message {
+            background: #2563eb;
+            color: white;
+            padding: 18px 22px;
+            border-radius: 18px;
+            margin: 15px 0 15px auto;
+            max-width: 85%;
+            font-size: 17px;
+            line-height: 1.5;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .ai-message {
+            background: #eef2ff;
+            color: #111827;
+            padding: 20px 22px;
+            border-radius: 18px;
+            margin: 15px 0;
+            max-width: 90%;
+            font-size: 17px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 18px;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* INPUT AREA */
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            background: white;
+        }
+
+        .chat-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+
+            /* Unicode / multilingual support */
+            font-family: Arial, "Noto Sans", "Noto Sans Telugu",
+                         "Noto Sans Devanagari", "Noto Sans Tamil",
+                         "Noto Sans Kannada", sans-serif;
+
+            unicode-bidi: plaintext;
+        }
+
+        .chat-input:focus {
+            border-color: #2563eb;
+        }
+
+        .send-button {
+            padding: 0 25px;
+            border: none;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            min-width: 110px;
+        }
+
+        .send-button:hover {
+            background: #1d4ed8;
+        }
+
+        .send-button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+
+        /* LANGUAGE SELECTOR */
+        .language-selector {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .language-selector label {
+            color: #111827;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .language-selector select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            outline: none;
+            background: white;
+            color: #111827;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 130px;
+        }
+
+        .language-selector select:focus {
+            border-color: #2563eb;
+        }
+
+        /* MOBILE */
+        @media (max-width: 900px) {
+
+            .page {
+                flex-direction: column;
+            }
+
+            .left-side {
+                width: 100%;
+                padding: 30px;
+            }
+
+            .assistant {
+                width: 100%;
+                min-height: 700px;
+            }
+
+            .left-side h1 {
+                font-size: 36px;
+            }
+
+            .input-row {
+                flex-direction: column;
+            }
+
+            .send-button {
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <!-- ========================================= -->
+    <!-- LEFT SIDE -->
+    <!-- ========================================= -->
+
+    <div class="left-side">
+
+        <h1>
+            MRI Image Analysis
+        </h1>
+
+        <div class="prediction-card">
+
+            <h2>
+                Prediction Result
+            </h2>
+
+            <p>
+                <strong>Prediction:</strong>
+                {{ prediction | default('Not available') }}
+            </p>
+
+            <p>
+                <strong>Confidence:</strong>
+                {{ confidence | default('0') }}%
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RIGHT SIDE -->
+    <!-- ========================================= -->
+
+    <div class="assistant">
+
+        <!-- HEADER -->
+
+        <div class="assistant-header">
+
+            <div class="robot-icon">
+                🤖
+            </div>
+
+            <div class="assistant-title">
+
+                <h2>
+                    MRI AI Assistant
+                </h2>
+
+                <p>
+                    Ask questions about your MRI result
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- CHAT AREA -->
+        <!-- ========================================= -->
+
+        <div class="chat-area">
+
+            <!-- WELCOME -->
+
+            <div class="welcome-message">
+
+                👋 Hello! I'm your MRI AI Assistant.
+
+                <br><br>
+
+                Your detected result is:
+
+                <strong>
+                    {{ prediction | default('Not available') }}
+                </strong>
+
+                <br><br>
+
+                Select your preferred language below and
+                ask me questions about your MRI result.
+
+            </div>
+
+
+            <!-- USER QUESTION -->
+
+            {% if question %}
+
+            <div class="user-message">
+                {{ question }}
+            </div>
+
+            {% endif %}
+
+
+            <!-- AI RESPONSE -->
+
+            {% if response %}
+
+            <div class="ai-message">
+                {{ response }}
+            </div>
+
+            {% endif %}
+
+
+            <!-- ERROR -->
+
+            {% if error %}
+
+            <div class="error-message">
+                {{ error }}
+            </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- CHAT INPUT -->
+        <!-- ========================================= -->
+
+        <div class="chat-input-area">
+
+            <form
+                action="/chat"
+                method="POST"
+                accept-charset="UTF-8"
+                class="chat-form"
+                id="chat-form"
+            >
+
+                <!-- LANGUAGE -->
+                <!-- This hidden field is the value Flask receives -->
+
+                <input
+                    type="hidden"
+                    id="selected-language"
+                    name="language"
+                    value="{{ language | default('English') }}"
+                >
+
+
+                <!-- MRI PREDICTION -->
+
+                <input
+                    type="hidden"
+                    name="prediction"
+                    value="{{ prediction | default('') }}"
+                >
+
+
+                <!-- MRI CONFIDENCE -->
+
+                <input
+                    type="hidden"
+                    name="confidence"
+                    value="{{ confidence | default('0') }}"
+                >
+
+
+                <!-- INPUT + SEND BUTTON -->
+
+                <div class="input-row">
+
+                    <input
+                        type="text"
+                        id="question"
+                        name="question"
+                        class="chat-input"
+                        placeholder="Ask something..."
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+
+                    <button
+                        type="submit"
+                        class="send-button"
+                        id="send-button"
+                    >
+                        Send ➤
+                    </button>
+
+                </div>
+
+
+                <!-- LANGUAGE SELECTOR -->
+
+                <div class="language-selector">
+
+                    <label for="language-visible">
+                        Language:
+                    </label>
+
+                    <select
+                        id="language-visible"
+                        required
+                    >
+
+                        <option value="English">
+                            English
+                        </option>
+
+                        <option value="Hindi">
+                            हिन्दी
+                        </option>
+
+                        <option value="Telugu">
+                            తెలుగు
+                        </option>
+
+                        <option value="Tamil">
+                            தமிழ்
+                        </option>
+
+                        <option value="Kannada">
+                            ಕನ್ನಡ
+                        </option>
+
+                        <option value="Malayalam">
+                            മലയാളം
+                        </option>
+
+                        <option value="Bengali">
+                            বাংলা
+                        </option>
+
+                        <option value="Marathi">
+                            मराठी
+                        </option>
+
+                        <option value="Gujarati">
+                            ગુજરાતી
+                        </option>
+
+                        <option value="Punjabi">
+                            ਪੰਜਾਬੀ
+                        </option>
+
+                        <option value="Urdu">
+                            اردو
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("chat-form");
+
+    const questionInput =
+        document.getElementById("question");
+
+    const languageVisible =
+        document.getElementById("language-visible");
+
+    const selectedLanguage =
+        document.getElementById("selected-language");
+
+    const sendButton =
+        document.getElementById("send-button");
+
+
+    /*
+     * Set the current language when the page loads.
+     */
+
+    const currentLanguage =
+        "{{ language | default('English') }}";
+
+    if (currentLanguage) {
+
+        languageVisible.value = currentLanguage;
+
+        selectedLanguage.value = currentLanguage;
+
+    }
+
+
+    /*
+     * Change language.
+     */
+
+    languageVisible.addEventListener("change", function () {
+
+        selectedLanguage.value =
+            languageVisible.value;
+
+        console.log(
+            "Selected language:",
+            selectedLanguage.value
+        );
+
+    });
+
+
+    /*
+     * Form submission.
+     *
+     * IMPORTANT:
+     * Do NOT modify the question.
+     * Telugu, Hindi, Tamil, Kannada, etc.
+     * will be submitted exactly as typed.
+     */
+
+    form.addEventListener("submit", function () {
+
+        const question =
+            questionInput.value.trim();
+
+        const language =
+            selectedLanguage.value;
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "Question:",
+            question
+        );
+
+        console.log(
+            "Language:",
+            language
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        /*
+         * Prevent empty question.
+         */
+
+        if (!question) {
+
+            alert("Please enter your question.");
+
+            return;
+
+        }
+
+
+        /*
+         * Disable button to prevent
+         * accidental double submission.
+         */
+
+        sendButton.disabled = true;
+
+        sendButton.textContent = "Sending...";
+
+    });
+
+});
+
+</script>
+
+
+</body>
+</html>

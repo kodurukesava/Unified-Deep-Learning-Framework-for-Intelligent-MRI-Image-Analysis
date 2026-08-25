@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MRI Health Assistant</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static',
+        filename='css/chatbot.css') }}"
+    >
+
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <h1>
+            MRI Health Assistant
+        </h1>
+
+        <p>
+            This assistant provides general
+            educational information.
+        </p>
+
+        <p>
+            AI Prediction:
+            <strong>
+                {{ prediction }}
+            </strong>
+        </p>
+
+        <p>
+            Confidence:
+            <strong>
+                {{ confidence }}%
+            </strong>
+        </p>
+
+
+        <form
+            action="/chat"
+            method="POST"
+        >
+
+            <label>
+                Preferred Language
+            </label>
+
+            <select
+                name="language"
+                required
+            >
+
+                <option value="English">
+                    English
+                </option>
+
+                <option value="Hindi">
+                    हिन्दी
+                </option>
+
+                <option value="Telugu">
+                    తెలుగు
+                </option>
+
+                <option value="Tamil">
+                    தமிழ்
+                </option>
+
+                <option value="Kannada">
+                    ಕನ್ನಡ
+                </option>
+
+                <option value="Malayalam">
+                    മലയാളം
+                </option>
+
+                <option value="Bengali">
+                    বাংলা
+                </option>
+
+                <option value="Marathi">
+                    मराठी
+                </option>
+
+                <option value="Gujarati">
+                    ગુજરાતી
+                </option>
+
+                <option value="Punjabi">
+                    ਪੰਜਾਬੀ
+                </option>
+
+                <option value="Odia">
+                    ଓଡ଼ିଆ
+                </option>
+
+                <option value="Assamese">
+                    অসমীয়া
+                </option>
+
+                <option value="Urdu">
+                    اردو
+                </option>
+
+            </select>
+
+
+            <br><br>
+
+
+            <label>
+                Ask your question
+            </label>
+
+            <textarea
+                name="question"
+                rows="5"
+                placeholder="Ask about the result, general precautions, nutrition, or questions to discuss with your doctor..."
+                required
+            ></textarea>
+
+
+            <input
+                type="hidden"
+                name="prediction"
+                value="{{ prediction }}"
+            >
+
+            <input
+                type="hidden"
+                name="confidence"
+                value="{{ confidence }}"
+            >
+
+
+            <button type="submit">
+                Ask Assistant
+            </button>
+
+        </form>
+
+
+        {% if answer %}
+
+        <div class="answer">
+
+            <h2>
+                Assistant
+            </h2>
+
+            <p>
+                {{ answer }}
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+
+</html>
