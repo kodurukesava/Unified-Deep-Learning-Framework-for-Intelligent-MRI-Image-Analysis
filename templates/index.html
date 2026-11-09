@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intelligent MRI Image Analysis</title>
+
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -19,17 +20,16 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background: var(--bg-dark);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
@@ -40,45 +40,113 @@
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 40px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,.5);
         }
 
         h1 {
+            text-align: center;
             font-size: 1.8rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 12px;
         }
 
-        p.subtitle {
+        .subtitle {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: .95rem;
+            line-height: 1.6;
+            text-align: center;
             margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            color: var(--accent-blue);
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+
+        .patient-details {
+            margin-bottom: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: .9rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: .95rem;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .form-group input::placeholder {
+            color: #64748b;
         }
 
         .upload-box {
             border: 2px dashed var(--border-color);
-            border-radius: 12px;
+            border-radius: 18px;
             padding: 40px 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(15, 23, 42, 0.4);
+            transition: .3s;
+            background: rgba(15, 23, 42, .4);
             margin-bottom: 24px;
+            text-align: center;
         }
 
-        .upload-box:hover {
+        .upload-box:hover,
+        .upload-box.drag-over {
             border-color: var(--accent-blue);
-            background: rgba(56, 189, 248, 0.05);
+            background: rgba(56, 189, 248, .07);
+        }
+
+        .upload-box:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 4px;
+        }
+
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
         }
 
         .upload-icon {
-            width: 48px;
-            height: 48px;
-            fill: var(--accent-blue);
-            margin-bottom: 12px;
+            font-size: 42px;
+            line-height: 1;
+        }
+
+        .upload-label strong {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            color: var(--text-muted);
+            font-size: .82rem;
+            line-height: 1.5;
         }
 
         .file-input {
@@ -86,15 +154,20 @@
         }
 
         .file-name-display {
-            margin-top: 10px;
-            font-size: 0.9rem;
+            margin-top: 16px;
+            font-size: .9rem;
             color: var(--accent-blue);
             font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .file-name-display.error {
+            color: #fca5a5;
         }
 
         .btn-submit {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
-            color: #fff;
+            color: white;
             border: none;
             padding: 14px 28px;
             border-radius: 8px;
@@ -102,46 +175,349 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: opacity 0.2s ease;
+            transition: .2s;
         }
 
         .btn-submit:hover {
-            opacity: 0.9;
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        .feature-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .feature-links a {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 18px;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-size: .9rem;
+            font-weight: 600;
+        }
+
+        .feature-links a:hover {
+            background: #1d4ed8;
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            font-size: .78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 25px 18px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .upload-box {
+                padding: 30px 12px;
+            }
+
+            .feature-links {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
+
 <body>
+    <main class="container">
+        <h1>Intelligent MRI Image Analysis</h1>
 
-<div class="container">
-    <h1>Intelligent MRI Image Analysis</h1>
-    <p class="subtitle">Upload a brain MRI scan image (JPG, PNG, WEBP, BMP) for automated deep learning diagnosis.</p>
+        <p class="subtitle">
+            Enter the patient's details and upload a brain MRI scan
+            for deep learning-based image analysis.
+            Supported formats: JPG, JPEG, PNG, WEBP and BMP.
+        </p>
 
-    <form action="/predict" method="POST" enctype="multipart/form-data">
-        <div class="upload-box" onclick="document.getElementById('mri_image').click()">
-            <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-            </svg>
-            <p style="font-size: 0.95rem; font-weight: 500;">Click to select or drag & drop MRI image</p>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">Supported formats: JPG, JPEG, PNG, BMP, WEBP (Max: 16 MB)</p>
-            <div id="fileName" class="file-name-display"></div>
-        </div>
+        <form
+            action="{{ url_for('predict') }}"
+            method="POST"
+            enctype="multipart/form-data"
+            id="mriForm"
+        >
+            <section class="patient-details">
+                <h2 class="section-title">Patient Information</h2>
 
-        <input type="file" id="mri_image" name="mri_image" class="file-input" accept="image/*" required onchange="showFileName(this)">
+                <div class="form-group">
+                    <label for="patient_name">Patient Name</label>
+                    <input
+                        type="text"
+                        id="patient_name"
+                        name="patient_name"
+                        placeholder="Enter patient's full name"
+                        maxlength="100"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
 
-        <button type="submit" class="btn-submit">Analyze MRI Image</button>
-    </form>
-</div>
+                <div class="form-group">
+                    <label for="patient_age">Patient Age</label>
+                    <input
+                        type="number"
+                        id="patient_age"
+                        name="patient_age"
+                        placeholder="Enter patient's age"
+                        min="1"
+                        max="120"
+                        step="1"
+                        required
+                    >
+                </div>
 
-<script>
-    function showFileName(input) {
-        const fileNameDiv = document.getElementById('fileName');
-        if (input.files && input.files[0]) {
-            fileNameDiv.textContent = 'Selected: ' + input.files[0].name;
-        } else {
-            fileNameDiv.textContent = '';
-        }
-    }
-</script>
+                <div class="form-group">
+                    <label for="patient_code">Patient Code</label>
+                    <input
+                        type="text"
+                        id="patient_code"
+                        name="patient_code"
+                        placeholder="Enter unique patient code"
+                        maxlength="50"
+                        required
+                    >
+                </div>
+            </section>
 
+            <h2 class="section-title">Upload MRI Scan</h2>
+
+            <div
+                class="upload-box"
+                id="uploadBox"
+                role="button"
+                tabindex="0"
+                aria-label="Select an MRI image"
+            >
+                <label for="mri_image" class="upload-label">
+                    <span class="upload-icon" aria-hidden="true">☁️</span>
+                    <strong>Click to select or drag and drop an MRI image</strong>
+                    <span class="upload-hint">
+                        JPG, JPEG, PNG, BMP, WEBP — Maximum size: 16 MB
+                    </span>
+                </label>
+
+                <p
+                    id="selectedFile"
+                    class="file-name-display"
+                    aria-live="polite"
+                >
+                    No image selected
+                </p>
+            </div>
+
+            <input
+                type="file"
+                id="mri_image"
+                name="mri_image"
+                class="file-input"
+                accept=".jpg,.jpeg,.png,.bmp,.webp"
+                required
+            >
+
+            <button type="submit" class="btn-submit">
+                Analyze MRI Image
+            </button>
+        </form>
+
+        <nav class="feature-links" aria-label="Application navigation">
+            <a href="{{ url_for('dashboard') }}">Doctor/Admin Dashboard</a>
+            <a href="{{ url_for('patients') }}">View Patients</a>
+        </nav>
+
+        <p class="footer-note">
+            This application provides AI-assisted image analysis for research
+            and educational purposes. Results should be reviewed by a qualified
+            medical professional and must not be treated as a standalone diagnosis.
+        </p>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const fileInput = document.getElementById("mri_image");
+            const uploadBox = document.getElementById("uploadBox");
+            const fileText = document.getElementById("selectedFile");
+            const mriForm = document.getElementById("mriForm");
+
+            const allowedExtensions = ["jpg", "jpeg", "png", "bmp", "webp"];
+            const maxFileSize = 16 * 1024 * 1024;
+
+            function showMessage(message, isError = false) {
+                fileText.textContent = message;
+                fileText.classList.toggle("error", isError);
+            }
+
+            function validateFile(file, showAlert = false) {
+                if (!file) {
+                    showMessage("No image selected", false);
+                    return false;
+                }
+
+                const extension = file.name.includes(".")
+                    ? file.name.split(".").pop().toLowerCase()
+                    : "";
+
+                if (!allowedExtensions.includes(extension)) {
+                    showMessage(
+                        "Unsupported file type. Choose JPG, JPEG, PNG, BMP, or WEBP.",
+                        true
+                    );
+
+                    if (showAlert) {
+                        alert("Please select a JPG, JPEG, PNG, BMP, or WEBP image.");
+                    }
+
+                    return false;
+                }
+
+                if (file.size > maxFileSize) {
+                    showMessage("File exceeds the 16 MB limit.", true);
+
+                    if (showAlert) {
+                        alert("The image must not exceed 16 MB.");
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            function displaySelectedFile(file) {
+                showMessage(
+                    file ? "Selected: " + file.name : "No image selected"
+                );
+            }
+
+            function assignDroppedFile(file) {
+                if (!validateFile(file, true)) {
+                    fileInput.value = "";
+                    return;
+                }
+
+                try {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(file);
+                    fileInput.files = transfer.files;
+                    displaySelectedFile(file);
+                } catch (error) {
+                    console.error("Could not assign dropped file:", error);
+                    fileInput.value = "";
+                    showMessage(
+                        "Could not attach this file. Please click to select it.",
+                        true
+                    );
+                }
+            }
+
+            uploadBox.addEventListener("click", function (event) {
+                if (event.target.closest("label")) {
+                    return;
+                }
+
+                fileInput.click();
+            });
+
+            uploadBox.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    fileInput.click();
+                }
+            });
+
+            fileInput.addEventListener("change", function () {
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    displaySelectedFile(null);
+                    return;
+                }
+
+                if (!validateFile(file, true)) {
+                    fileInput.value = "";
+                    return;
+                }
+
+                displaySelectedFile(file);
+            });
+
+            uploadBox.addEventListener("dragover", function (event) {
+                event.preventDefault();
+                uploadBox.classList.add("drag-over");
+            });
+
+            uploadBox.addEventListener("dragleave", function (event) {
+                if (!uploadBox.contains(event.relatedTarget)) {
+                    uploadBox.classList.remove("drag-over");
+                }
+            });
+
+            uploadBox.addEventListener("drop", function (event) {
+                event.preventDefault();
+                uploadBox.classList.remove("drag-over");
+
+                const files = event.dataTransfer.files;
+
+                if (files && files.length > 0) {
+                    assignDroppedFile(files[0]);
+                }
+            });
+
+            mriForm.addEventListener("submit", function (event) {
+                const patientName =
+                    document.getElementById("patient_name").value.trim();
+
+                const patientAgeValue =
+                    document.getElementById("patient_age").value;
+
+                const patientAge = Number(patientAgeValue);
+
+                const patientCode =
+                    document.getElementById("patient_code").value.trim();
+
+                const file = fileInput.files[0];
+
+                if (!patientName || !patientCode) {
+                    event.preventDefault();
+                    alert("Please enter the patient's name and patient code.");
+                    return;
+                }
+
+                if (
+                    patientAgeValue === "" ||
+                    !Number.isInteger(patientAge) ||
+                    patientAge < 1 ||
+                    patientAge > 120
+                ) {
+                    event.preventDefault();
+                    alert("Please enter a valid patient age between 1 and 120.");
+                    return;
+                }
+
+                if (!file || !validateFile(file, true)) {
+                    event.preventDefault();
+
+                    if (!file) {
+                        showMessage("No image selected", true);
+                        alert("Please select an MRI image before continuing.");
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

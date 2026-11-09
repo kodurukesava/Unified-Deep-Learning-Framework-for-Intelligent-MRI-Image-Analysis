@@ -1,700 +1,352 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MRI Analysis Result</title>
 
-
     <style>
-
         :root {
-
             --bg-dark: #0f172a;
             --card-bg: #1e293b;
-
             --accent-blue: #38bdf8;
             --accent-indigo: #6366f1;
-
             --accent-green: #22c55e;
             --accent-red: #ef4444;
-
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-
             --border-color: #334155;
         }
 
-
         * {
-
             box-sizing: border-box;
-
             margin: 0;
-
             padding: 0;
-
-            font-family:
-                'Segoe UI',
-                Tahoma,
-                Geneva,
-                Verdana,
-                sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-
         body {
-
             background-color: var(--bg-dark);
-
             color: var(--text-main);
-
             min-height: 100vh;
-
             display: flex;
-
             flex-direction: column;
-
             align-items: center;
-
             justify-content: center;
-
             padding: 20px;
         }
 
-
         .container {
-
             width: 100%;
-
             max-width: 720px;
-
             background: var(--card-bg);
-
             border: 1px solid var(--border-color);
-
             border-radius: 16px;
-
             padding: 36px;
-
-            box-shadow:
-                0 20px 25px -5px
-                rgba(0, 0, 0, 0.5);
-
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
 
-
         h1 {
-
             font-size: 1.8rem;
-
             font-weight: 700;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--accent-blue),
-                    var(--accent-indigo)
-                );
-
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
             -webkit-background-clip: text;
-
             -webkit-text-fill-color: transparent;
-
             margin-bottom: 24px;
         }
 
-
         .error-card {
-
-            background:
-                rgba(239, 68, 68, 0.1);
-
-            border:
-                1px solid var(--accent-red);
-
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--accent-red);
             color: #fca5a5;
-
             padding: 20px;
-
             border-radius: 10px;
-
             margin-bottom: 20px;
         }
 
-
         .mri-preview {
-
             max-width: 100%;
-
             max-height: 320px;
-
             border-radius: 12px;
-
-            border:
-                2px solid var(--border-color);
-
+            border: 2px solid var(--border-color);
             margin-bottom: 24px;
-
             object-fit: contain;
         }
 
-
         .result-box {
-
-            background:
-                rgba(15, 23, 42, 0.5);
-
+            background: rgba(15, 23, 42, 0.5);
             border-radius: 12px;
-
             padding: 20px;
-
-            border:
-                1px solid var(--border-color);
-
+            border: 1px solid var(--border-color);
             margin-bottom: 24px;
-
             text-align: left;
         }
 
-
         .result-label {
-
             font-size: 0.9rem;
-
             color: var(--text-muted);
-
             text-transform: uppercase;
-
             letter-spacing: 0.05em;
-
             margin-bottom: 4px;
         }
 
-
         .prediction-value {
-
             font-size: 1.5rem;
-
             font-weight: 700;
-
             color: var(--accent-blue);
-
             margin-bottom: 12px;
-
             text-transform: capitalize;
+            overflow-wrap: anywhere;
         }
 
-
         .confidence-bar-bg {
-
             background: #334155;
-
             height: 10px;
-
             border-radius: 5px;
-
             overflow: hidden;
-
             margin-bottom: 20px;
         }
 
-
         .confidence-bar-fill {
-
-            background:
-                linear-gradient(
-                    90deg,
-                    var(--accent-blue),
-                    var(--accent-green)
-                );
-
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
             height: 100%;
-
             border-radius: 5px;
         }
 
-
         .prob-table {
-
             width: 100%;
-
             border-collapse: collapse;
-
             margin-top: 10px;
         }
 
-
         .prob-table th,
         .prob-table td {
-
             padding: 10px 12px;
-
-            border-bottom:
-                1px solid var(--border-color);
-
+            border-bottom: 1px solid var(--border-color);
             font-size: 0.95rem;
         }
 
-
         .prob-table th {
-
             color: var(--text-muted);
-
             font-weight: 600;
-
             text-align: left;
         }
-
-
-        /* =====================================================
-           CHATBOT SECTION
-        ===================================================== */
-
 
         .chatbot-box {
-
             margin-top: 25px;
-
             padding: 22px;
-
             border-radius: 14px;
-
-            border:
-                1px solid var(--border-color);
-
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(56, 189, 248, 0.08),
-                    rgba(99, 102, 241, 0.08)
-                );
-
+            border: 1px solid var(--border-color);
+            background: linear-gradient(
+                135deg,
+                rgba(56, 189, 248, 0.08),
+                rgba(99, 102, 241, 0.08)
+            );
             text-align: left;
         }
 
-
         .chatbot-title {
-
             font-size: 1.25rem;
-
             font-weight: 700;
-
             color: var(--accent-blue);
-
             margin-bottom: 8px;
         }
 
-
         .chatbot-description {
-
             color: var(--text-muted);
-
             font-size: 0.9rem;
-
             line-height: 1.5;
-
             margin-bottom: 18px;
         }
 
-
         .language-label {
-
             display: block;
-
             color: var(--text-muted);
-
             font-size: 0.9rem;
-
             margin-bottom: 7px;
         }
 
-
         .language-select {
-
             width: 100%;
-
             padding: 11px 12px;
-
             border-radius: 8px;
-
-            border:
-                1px solid var(--border-color);
-
+            border: 1px solid var(--border-color);
             background: #0f172a;
-
             color: var(--text-main);
-
             font-size: 0.95rem;
-
             margin-bottom: 15px;
-
             outline: none;
         }
 
-
         .language-select:focus {
-
-            border-color:
-                var(--accent-blue);
+            border-color: var(--accent-blue);
         }
 
+        .chatbot-button,
+        .btn-back {
+            display: inline-block;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
 
         .chatbot-button {
-
             width: 100%;
-
-            border: none;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--accent-blue),
-                    var(--accent-indigo)
-                );
-
-            color: white;
-
-            padding: 13px 20px;
-
-            border-radius: 9px;
-
             font-size: 1rem;
-
-            font-weight: 700;
-
-            cursor: pointer;
-
-            transition:
-                transform 0.2s ease,
-                opacity 0.2s ease;
+            padding: 13px 20px;
         }
 
-
-        .chatbot-button:hover {
-
-            opacity: 0.92;
-
-            transform:
-                translateY(-1px);
+        .chatbot-button:hover,
+        .btn-back:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
-
 
         .medical-disclaimer {
-
             margin-top: 12px;
-
             font-size: 0.75rem;
-
-            line-height: 1.4;
-
+            line-height: 1.5;
             color: var(--text-muted);
-
             text-align: center;
         }
 
-
-        /* =====================================================
-           BACK BUTTON
-        ===================================================== */
-
-
-        .btn-back {
-
-            display: inline-block;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--accent-blue),
-                    var(--accent-indigo)
-                );
-
-            color: #fff;
-
-            text-decoration: none;
-
-            padding: 12px 24px;
-
-            border-radius: 8px;
-
-            font-weight: 600;
-
-            transition:
-                opacity 0.2s ease;
-
-            margin-top: 20px;
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
         }
 
-
-        .btn-back:hover {
-
-            opacity: 0.9;
+        .action-buttons .btn-back {
+            flex: 1 1 220px;
+            margin-top: 0;
         }
 
-
-        /* =====================================================
-           MOBILE
-        ===================================================== */
-
+        .btn-report {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+        }
 
         @media (max-width: 600px) {
-
             .container {
-
                 padding: 22px;
             }
 
-
             h1 {
-
                 font-size: 1.5rem;
             }
 
-
             .prediction-value {
-
                 font-size: 1.3rem;
             }
 
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn-back {
+                width: 100%;
+                flex-basis: auto;
+            }
+
+            .prob-table th,
+            .prob-table td {
+                padding: 8px 6px;
+                font-size: 0.85rem;
+            }
         }
-
     </style>
-
 </head>
 
-
 <body>
-
-
 <div class="container">
 
-
-    <!-- =====================================================
-         PAGE TITLE
-    ====================================================== -->
-
-    <h1>
-        MRI Analysis Result
-    </h1>
-
-
-    <!-- =====================================================
-         ERROR
-    ====================================================== -->
+    <h1>MRI Analysis Result</h1>
 
     {% if error %}
-
         <div class="error-card">
-
-            <h3>
-                Error
-            </h3>
-
-            <p>
-                {{ error }}
-            </p>
-
+            <h3>Error</h3>
+            <p>{{ error }}</p>
         </div>
-
-
     {% else %}
 
-
-        <!-- =================================================
-             MRI IMAGE
-        ================================================== -->
-
         {% if image %}
-
             <img
-                src="{{ url_for(
-                    'static',
-                    filename='uploads/' + image
-                ) }}"
+                src="{{ url_for('static', filename='uploads/' + image) }}"
                 class="mri-preview"
                 alt="Uploaded MRI Scan"
             >
-
         {% endif %}
 
-
-        <!-- =================================================
-             MRI RESULT
-        ================================================== -->
-
         <div class="result-box">
-
-
-            <div class="result-label">
-                Predicted Condition
-            </div>
-
-
-            <div class="prediction-value">
-
-                {{ prediction }}
-
-            </div>
-
+            <div class="result-label">Predicted Condition</div>
+            <div class="prediction-value">{{ prediction }}</div>
 
             <div class="result-label">
-
-                Confidence:
-                {{ confidence }}%
-
+                Confidence: {{ confidence }}%
             </div>
-
 
             <div class="confidence-bar-bg">
-
                 <div
                     class="confidence-bar-fill"
                     style="width: {{ confidence }}%;"
-                >
-                </div>
-
+                ></div>
             </div>
-
-
-            <!-- =============================================
-                 CLASS PROBABILITIES
-            ============================================== -->
 
             {% if probabilities %}
-
-                <div
-                    class="result-label"
-                    style="margin-top: 16px;"
-                >
-
+                <div class="result-label" style="margin-top: 16px;">
                     Class Probabilities
-
                 </div>
 
-
                 <table class="prob-table">
-
                     <thead>
-
                         <tr>
-
-                            <th>
-                                Class
-                            </th>
-
-                            <th
-                                style="text-align: right;"
-                            >
-                                Probability
-                            </th>
-
+                            <th>Class</th>
+                            <th style="text-align: right;">Probability</th>
                         </tr>
-
                     </thead>
 
-
                     <tbody>
-
-                        {% for
-                            class_name,
-                            prob
-                            in probabilities.items()
-                        %}
-
+                        {% for class_name, prob in probabilities.items() %}
                             <tr>
-
-                                <td
-                                    style="
-                                    text-transform: capitalize;
-                                    "
-                                >
-
+                                <td style="text-transform: capitalize;">
                                     {{ class_name }}
-
                                 </td>
-
-
-                                <td
-                                    style="
-                                    text-align: right;
-                                    font-weight: 600;
-                                    color: var(--accent-blue);
-                                    "
-                                >
-
+                                <td style="text-align: right; font-weight: 600; color: var(--accent-blue);">
                                     {{ prob }}%
-
                                 </td>
-
                             </tr>
-
                         {% endfor %}
-
                     </tbody>
-
                 </table>
-
             {% endif %}
-
         </div>
 
-
-        <!-- =================================================
-             MULTILINGUAL CHATBOT
-        ================================================== -->
-
         <div class="chatbot-box">
-
-
             <div class="chatbot-title">
-
                 💬 MRI Health Assistant
-
             </div>
-
 
             <div class="chatbot-description">
-
-                Ask questions about your MRI result,
-                general precautions, nutrition,
-                or questions you may want to discuss
-                with a healthcare professional.
-
+                Ask questions about your MRI result, general precautions,
+                nutrition, or questions you may want to discuss with a
+                healthcare professional.
             </div>
 
-
-            <!-- =============================================
-                 CHATBOT FORM
-            ============================================== -->
-
-            <form
-                action="/chat"
-                method="POST"
-            >
-
-
-                <!-- =========================================
-                     LANGUAGE SELECTION
-                ========================================== -->
-
-                <label
-                    class="language-label"
-                    for="language"
-                >
-
+            <form action="{{ url_for('chat') }}" method="POST">
+                <label class="language-label" for="language">
                     Select Preferred Language
-
                 </label>
-
 
                 <select
                     class="language-select"
@@ -702,65 +354,20 @@
                     name="language"
                     required
                 >
-
-                    <option value="English">
-                        English
-                    </option>
-
-                    <option value="Hindi">
-                        हिन्दी
-                    </option>
-
-                    <option value="Telugu">
-                        తెలుగు
-                    </option>
-
-                    <option value="Tamil">
-                        தமிழ்
-                    </option>
-
-                    <option value="Kannada">
-                        ಕನ್ನಡ
-                    </option>
-
-                    <option value="Malayalam">
-                        മലയാളം
-                    </option>
-
-                    <option value="Bengali">
-                        বাংলা
-                    </option>
-
-                    <option value="Marathi">
-                        मराठी
-                    </option>
-
-                    <option value="Gujarati">
-                        ગુજરાતી
-                    </option>
-
-                    <option value="Punjabi">
-                        ਪੰਜਾਬੀ
-                    </option>
-
-                    <option value="Odia">
-                        ଓଡ଼ିଆ
-                    </option>
-
-                    <option value="Assamese">
-                        অসমীয়া
-                    </option>
-
-                    <option value="Urdu">
-                        اردو
-                    </option>
-
+                    <option value="English">English</option>
+                    <option value="Hindi">हिन्दी</option>
+                    <option value="Telugu">తెలుగు</option>
+                    <option value="Tamil">தமிழ்</option>
+                    <option value="Kannada">ಕನ್ನಡ</option>
+                    <option value="Malayalam">മലയാളം</option>
+                    <option value="Bengali">বাংলা</option>
+                    <option value="Marathi">मराठी</option>
+                    <option value="Gujarati">ગુજરાતી</option>
+                    <option value="Punjabi">ਪੰਜਾਬੀ</option>
+                    <option value="Odia">ଓଡ଼ିଆ</option>
+                    <option value="Assamese">অসমীয়া</option>
+                    <option value="Urdu">اردو</option>
                 </select>
-
-
-                <!-- =========================================
-                     SEND MRI PREDICTION
-                ========================================== -->
 
                 <input
                     type="hidden"
@@ -768,63 +375,54 @@
                     value="{{ prediction }}"
                 >
 
-
                 <input
                     type="hidden"
                     name="confidence"
                     value="{{ confidence }}"
                 >
 
-
-                <!-- =========================================
-                     CHAT BUTTON
-                ========================================== -->
-
-                <button
-                    type="submit"
-                    class="chatbot-button"
+                <input
+                    type="hidden"
+                    name="image"
+                    value="{{ image }}"
                 >
 
+                <button type="submit" class="chatbot-button">
                     💬 Ask MRI Health Assistant
-
                 </button>
-
-
             </form>
 
-
             <div class="medical-disclaimer">
-
-                This assistant provides general educational
-                information and does not replace a qualified
-                healthcare professional.
-
+                This assistant provides general educational information
+                and does not replace a qualified healthcare professional.
             </div>
-
-
         </div>
-
 
     {% endif %}
 
+    <!-- Navigation and PDF report buttons -->
+    <div class="action-buttons">
 
-    <!-- =====================================================
-         BACK BUTTON
-    ====================================================== -->
+        <a href="{{ url_for('index') }}" class="btn-back">
+            Analyze Another MRI Scan
+        </a>
 
-    <a
-        href="{{ url_for('index') }}"
-        class="btn-back"
-    >
 
-        Analyze Another MRI Scan
-
+{% if analysis_id is defined and analysis_id %}
+    <a href="{{ url_for('download_report', analysis_id=analysis_id) }}"
+       class="btn-back btn-report">
+        Download MRI Analysis PDF
     </a>
+{% endif %}
 
+
+    </div>
+
+    <p class="medical-disclaimer">
+        AI-generated MRI results are for research and educational assistance.
+        They are not a confirmed diagnosis. Consult a qualified medical professional.
+    </p>
 
 </div>
-
-
 </body>
-
 </html>

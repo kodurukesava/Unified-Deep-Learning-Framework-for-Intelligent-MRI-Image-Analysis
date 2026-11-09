@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Patient MRI History</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            color: #60a5fa;
+        }
+
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .info-item {
+            background: #172033;
+            padding: 14px;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .label {
+            display: block;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .value {
+            font-weight: bold;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 650px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #172033;
+            color: #93c5fd;
+        }
+
+        tr:hover td {
+            background: #273449;
+        }
+
+        a {
+            color: #60a5fa;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 9px 13px;
+            border-radius: 7px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .empty {
+            text-align: center;
+            color: #94a3b8;
+            padding: 24px;
+        }
+
+        .disclaimer {
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <p>
+        <a href="{{ url_for('patients') }}">&#8592; Back to Patients</a>
+        &nbsp; | &nbsp;
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    </p>
+
+    <section class="panel">
+        <h1>Patient Details</h1>
+
+        <div class="patient-info">
+            <div class="info-item">
+                <span class="label">Patient ID</span>
+                <span class="value">
+                    {{ patient['patient_code'] or patient['id'] }}
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Patient Name</span>
+                <span class="value">
+                    {{ patient['name'] or 'Not provided' }}
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Age</span>
+                <span class="value">
+                    {% if patient['age'] is not none %}
+                        {{ patient['age'] }}
+                    {% else %}
+                        Not provided
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Total MRI Analyses</span>
+                <span class="value">{{ analyses|length }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>MRI Analysis History</h2>
+
+        {% if analyses %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Analysis ID</th>
+                        <th>Date</th>
+                        <th>Prediction</th>
+                        <th>Confidence</th>
+                        <th>Report</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for item in analyses %}
+                    <tr>
+                        <td>{{ item['id'] }}</td>
+
+                        <td>
+                            {{ item['analysis_date'] or 'N/A' }}
+                        </td>
+
+                        <td>
+                            {{ item['prediction'] or 'Not available' }}
+                        </td>
+
+                        <td>
+                            {% if item['confidence'] is not none %}
+                                {{ "%.2f"|format(item['confidence']|float) }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a
+                                class="btn"
+                                href="{{ url_for(
+                                    'download_report',
+                                    analysis_id=item['id']
+                                ) }}"
+                            >
+                                Download PDF
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+            <p class="empty">
+                No MRI analysis history is available for this patient.
+            </p>
+        {% endif %}
+    </section>
+
+    <p class="disclaimer">
+        AI-generated results are not confirmed medical diagnoses.
+        Clinical interpretation requires a qualified healthcare professional.
+    </p>
+
+</div>
+</body>
+</html>

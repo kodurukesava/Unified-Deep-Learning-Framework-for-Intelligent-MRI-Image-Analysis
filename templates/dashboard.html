@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MRI Doctor Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            margin: 0;
+            color: #1f2937;
+        }
+        header {
+            background: #17365d;
+            color: white;
+            padding: 22px 5%;
+        }
+        main {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .card, .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 3px 12px #0000000c;
+        }
+        .number {
+            font-size: 30px;
+            font-weight: bold;
+            color: #1769aa;
+        }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            text-align: left;
+            padding: 13px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th { background: #edf3fa; }
+        a { color: #1769aa; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .button {
+            display: inline-block;
+            padding: 9px 12px;
+            background: #1769aa;
+            color: white;
+            border-radius: 6px;
+            margin: 2px;
+        }
+        .button:hover { text-decoration: none; background: #124f83; }
+        .empty { padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Doctor / Admin Dashboard</h1>
+    <p>MRI Image Analysis Management</p>
+</header>
+
+<main>
+    <div class="cards">
+        <div class="card">
+            <p>Total Patients</p>
+           return render_template(
+    "dashboard.html",
+    dashboard_data={},
+    stats={"patients": 0, "scans": 0, "predictions": 0}
+), 500
+        </div>
+        <div class="card">
+            <p>Total MRI Analyses</p>
+            <div class="number">{{ stats.scans }}</div>
+        </div>
+        <div class="card">
+            <p>Analyses Today</p>
+            <div class="number">{{ stats.today }}</div>
+        </div>
+    </div>
+
+    <section class="panel">
+        <h2>Recent MRI Analyses</h2>
+
+        {% if analyses %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Patient Name</th>
+                        <th>AI Prediction</th>
+                        <th>Confidence</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in analyses %}
+                    <tr>
+                        <td>{{ item.patient_code }}</td>
+                        <td>{{ item.patient_name }}</td>
+                        <td>{{ item.prediction }}</td>
+                        <td>{{ "%.2f"|format(item.confidence|float) }}%</td>
+                        <td>{{ item.analysis_date }}</td>
+                        <td>
+                            <a href="{{ url_for(
+                                'patient_details',
+                                patient_id=(
+                                    item.analysis_id
+                                )
+                            ) }}">View</a>
+                            |
+                            <a href="{{ url_for(
+                                'download_report',
+                                analysis_id=item.analysis_id
+                            ) }}">PDF</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="empty">No MRI analyses saved yet.</p>
+        {% endif %}
+
+        <p>
+            <a class="button" href="{{ url_for('index') }}">
+                Analyze Another MRI
+            </a>
+        </p>
+    </section>
+</main>
+</body>
+</html>

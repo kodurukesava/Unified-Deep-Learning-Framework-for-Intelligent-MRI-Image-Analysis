@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - MRI Analysis Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 25px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            padding: 11px;
+            width: 320px;
+            max-width: 100%;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #1e293b;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 7px;
+            text-decoration: none;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #334155;
+            text-align: left;
+        }
+
+        th {
+            color: #93c5fd;
+            background: #172033;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: #273449;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 15px;
+            background: #334155;
+            font-size: 12px;
+        }
+
+        .empty {
+            padding: 25px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .footer {
+            margin-top: 25px;
+        }
+
+        .record-count {
+            color: #94a3b8;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
+        .patient-name {
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 14px;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Doctor / Admin Dashboard</h1>
+
+    <p class="subtitle">
+        View registered patients and their MRI analysis history.
+    </p>
+
+    <div class="top-bar">
+        <input
+            type="search"
+            id="patientSearch"
+            class="search-box"
+            placeholder="Search by patient ID or name..."
+            aria-label="Search patients"
+        >
+
+        <a href="{{ url_for('index') }}" class="btn">
+            + Analyze MRI
+        </a>
+    </div>
+
+    <p class="record-count">
+        Total registered patients: {{ patients|length }}
+    </p>
+
+    <div class="table-container">
+        <table id="patientsTable">
+
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Patient Name</th>
+                    <th>Age</th>
+                    <th>Total Scans</th>
+                    <th>Latest Prediction</th>
+                    <th>Latest Analysis</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td>
+                        {{ patient['patient_id'] or 'N/A' }}
+                    </td>
+
+                    <td class="patient-name">
+                        {{ patient['name'] or 'Not provided' }}
+                    </td>
+
+                    <td>
+                        {% if patient['age'] is not none %}
+                            {{ patient['age'] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ patient['total_scans'] or 0 }}
+                    </td>
+
+                    <td>
+                        <span class="badge">
+                            {{ patient['latest_prediction'] or 'No prediction yet' }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ patient['latest_analysis'] or 'N/A' }}
+                    </td>
+
+                    <td>
+                        <a
+                            href="{{ url_for(
+                                'patient_details',
+                                patient_id=patient['patient_id']
+                            ) }}"
+                            class="btn"
+                        >
+                            View History
+                        </a>
+                    </td>
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty">
+                        No patient records found.
+                        Register a patient before analyzing an MRI.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="footer">
+        <a href="{{ url_for('dashboard') }}" class="btn">
+            Back to Dashboard
+        </a>
+    </div>
+
+</div>
+
+<script>
+    const searchInput = document.getElementById("patientSearch");
+    const tableBody = document.querySelector("#patientsTable tbody");
+
+    searchInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase().trim();
+        const rows = tableBody.querySelectorAll("tr");
+
+        rows.forEach(function (row) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? "" : "none";
+        });
+    });
+</script>
+
+</body>
+</html>

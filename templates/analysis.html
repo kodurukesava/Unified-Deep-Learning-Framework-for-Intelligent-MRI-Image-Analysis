@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MRI Analysis Details</title>
+</head>
+<body>
+    <h1>MRI Analysis Details</h1>
+
+    {% if analysis %}
+        <p><strong>Analysis ID:</strong> {{ analysis["id"] }}</p>
+        <p><strong>Patient ID:</strong> {{ analysis["patient_id"] }}</p>
+        <p><strong>Image:</strong> {{ analysis["image_filename"] }}</p>
+        <p><strong>Prediction:</strong> {{ analysis["prediction"] }}</p>
+        <p><strong>Confidence:</strong> {{ analysis["confidence"] }}%</p>
+        <p><strong>Analysis Date:</strong> {{ analysis["analysis_date"] }}</p>
+
+        <a href="{{ url_for('download_report', analysis_id=analysis['id']) }}">
+            Download PDF Report
+        </a>
+    {% else %}
+        <p>Analysis record not found.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+</body>
+</html>
