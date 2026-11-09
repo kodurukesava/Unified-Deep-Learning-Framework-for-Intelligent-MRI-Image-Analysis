@@ -1,0 +1,13 @@
+@"
+.venv/
+venv/
+.idea/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+notebooks/
+dataset/
+*.ipynb
+*.pyc
+*.log
+"@ | Set-Content .vercelignore
