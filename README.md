@@ -131,7 +131,7 @@ python app.py
 Open your browser and visit:
 
 ```text
-http://127.0.0.1:5000/
+https://mri-analysis-899514544884.asia-south1.run.app
 ```
 
 The MRI Image Analysis application will be available locally.
@@ -167,12 +167,6 @@ SQLite provides a lightweight database solution that can be integrated directly 
 
 This project was developed collaboratively by a team of four members. Each member contributed to different stages of the development process, including model development, image processing, web application development, database integration, and testing.
 
-| S.No | Team Member | Contribution |
-|---|---|---|
-| 1 | Your Name | Deep learning model integration, project coordination, and overall system development. |
-| 2 | Teammate 1 | MRI dataset collection, image preprocessing, and model training. |
-| 3 | Teammate 2 | Frontend development using HTML and CSS, and user interface design. |
-| 4 | Teammate 3 | Flask backend development, SQLite database integration, testing, and documentation. |
 
 ### Acknowledgement
 
