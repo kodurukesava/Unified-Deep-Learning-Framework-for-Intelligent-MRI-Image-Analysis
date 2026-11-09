@@ -13,3 +13,7 @@ uploads/
 instance/
 .DS_Store
 Thumbs.db
+# Database files
+database/*.db
+database/*.sqlite
+database/*.sqlite3
