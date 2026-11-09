@@ -1,0 +1,14 @@
+
+.venv/
+venv/
+.git/
+.idea/
+__pycache__/
+.pytest_cache/
+notebooks/
+dataset/
+results/
+*.ipynb
+*.pyc
+*.log
+.env
