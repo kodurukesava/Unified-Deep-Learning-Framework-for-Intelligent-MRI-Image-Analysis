@@ -177,19 +177,23 @@ Screenshots of the application can be added here to demonstrate its working.
 
 ### Home Page
 
-Add the screenshot of the main application page here.
+<img width="339" height="488" alt="image" src="https://github.com/user-attachments/assets/c363c6ee-585f-4cb4-b3b2-b4fbeecc98b4" />
+
 
 ### MRI Prediction Result
 
-Add the screenshot showing the MRI image classification result here.
+<img width="270" height="457" alt="image" src="https://github.com/user-attachments/assets/18fe2096-702f-45dd-bdf2-392ca5adf13f" />
+
 
 ### Doctor/Admin Dashboard
 
-Add the screenshot of the dashboard here.
+<img width="959" height="497" alt="image" src="https://github.com/user-attachments/assets/42fa169c-77d2-4ad5-9236-1bd66436de2b" />
+
 
 ### PDF Report
 
-Add the screenshot of the generated MRI analysis report here.
+<img width="368" height="352" alt="image" src="https://github.com/user-attachments/assets/862a32d8-e34d-4459-9b68-905e1b3af788" />
+
 
 ## Future Enhancements
 
