@@ -1,5 +1,4 @@
 # Unified Deep Learning Framework for Intelligent MRI Image Analysis
-# Unified Deep Learning Framework for Intelligent MRI Image Analysis
 
 ## About the Project
 
