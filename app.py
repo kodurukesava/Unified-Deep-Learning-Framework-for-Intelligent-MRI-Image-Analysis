@@ -1,10 +1,14 @@
+
 # ============================================================
-# MRI HEALTH CHATBOT + MRI IMAGE ANALYSIS
+# UNIFIED DEEP LEARNING FRAMEWORK FOR INTELLIGENT MRI ANALYSIS
+# Flask Application
 # ============================================================
 
 import os
 import sqlite3
 import json
+import logging
+
 from datetime import datetime
 from flask import (
     Flask,
@@ -36,37 +40,47 @@ from src.report_generator import generate_pdf_report
 
 
 # ============================================================
-# PATHS AND ENVIRONMENT
+# PATH CONFIGURATION
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DATABASE_DIR = os.path.join(BASE_DIR, "database")
 DB_PATH = os.path.join(DATABASE_DIR, "mri_analysis.db")
 
-load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
+os.makedirs(DATABASE_DIR, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv(
-    "GROQ_MODEL",
-    "openai/gpt-oss-120b",
+
+# ============================================================
+# ENVIRONMENT CONFIGURATION
+# ============================================================
+
+load_dotenv(
+    os.path.join(BASE_DIR, ".env"),
+    override=False
 )
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "openai/gpt-oss-120b"
+)
+
+SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+
+if not SECRET_KEY:
+    SECRET_KEY = os.urandom(32).hex()
+
 
 # ============================================================
-# GROQ CLIENT
+# LOGGING
 # ============================================================
 
-groq_client = None
+logging.basicConfig(level=logging.INFO)
 
-if GROQ_API_KEY:
-    try:
-        groq_client = Groq(api_key=GROQ_API_KEY)
-        print("Groq API client initialized.")
-        print("Groq model:", GROQ_MODEL)
-    except Exception as error:
-        print("Groq initialization error:", error)
-else:
-    print("WARNING: GROQ_API_KEY was not found in .env")
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -76,11 +90,35 @@ else:
 app = Flask(__name__)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_DIR
+
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-app.secret_key = os.getenv(
-    "FLASK_SECRET_KEY",
-    "change-this-development-key",
-)
+
+app.secret_key = SECRET_KEY
+
+
+# ============================================================
+# GROQ AI CONFIGURATION
+# ============================================================
+
+groq_client = None
+
+if GROQ_API_KEY:
+
+    try:
+
+        groq_client = Groq(
+            api_key=GROQ_API_KEY
+        )
+
+        logger.info("Groq AI initialized successfully.")
+
+    except Exception:
+
+        logger.exception("Groq initialization failed.")
+
+else:
+
+    logger.warning("GROQ_API_KEY is not configured.")
 
 
 # ============================================================
@@ -88,11 +126,36 @@ app.secret_key = os.getenv(
 # ============================================================
 
 try:
-    os.makedirs(DATABASE_DIR, exist_ok=True)
+
     init_dashboard_db()
-    print("Dashboard database initialized.")
-except Exception as error:
-    print("Database initialization error:", error)
+
+    logger.info("Dashboard database initialized.")
+
+except Exception:
+
+    logger.exception("Database initialization failed.")
+
+
+# ============================================================
+# MRI MODEL INITIALIZATION
+# ============================================================
+
+predictor = None
+
+try:
+
+    predictor = MRIPredictor()
+
+    logger.info("MRI model loaded successfully.")
+
+    logger.info(
+        "MRI classes: %s",
+        getattr(predictor, "class_names", [])
+    )
+
+except Exception:
+
+    logger.exception("MRI model loading failed.")
 
 
 # ============================================================
@@ -100,51 +163,53 @@ except Exception as error:
 # ============================================================
 
 ALLOWED_EXTENSIONS = {
-    "jpg", "jpeg", "png", "bmp", "webp"
+    "jpg",
+    "jpeg",
+    "png",
+    "bmp",
+    "webp"
 }
+
 
 SUPPORTED_LANGUAGES = {
-    "English", "Telugu", "Hindi", "Tamil", "Kannada",
-    "Malayalam", "Bengali", "Marathi", "Gujarati",
-    "Punjabi", "Urdu",
+    "English",
+    "Telugu",
+    "Hindi",
+    "Tamil",
+    "Kannada",
+    "Malayalam",
+    "Bengali",
+    "Marathi",
+    "Gujarati",
+    "Punjabi",
+    "Urdu"
 }
+
 
 LANGUAGE_INSTRUCTIONS = {
-    "English": "Answer completely in clear, simple English.",
-    "Telugu": "Answer in natural, simple Telugu (తెలుగు). Use English only for necessary medical terms.",
-    "Hindi": "Answer in natural, simple Hindi (हिन्दी). Use English only for necessary medical terms.",
-    "Tamil": "Answer in natural, simple Tamil (தமிழ்). Use English only for necessary medical terms.",
-    "Kannada": "Answer in natural, simple Kannada (ಕನ್ನಡ). Use English only for necessary medical terms.",
-    "Malayalam": "Answer in natural, simple Malayalam (മലയാളം). Use English only for necessary medical terms.",
-    "Bengali": "Answer in natural, simple Bengali (বাংলা). Use English only for necessary medical terms.",
-    "Marathi": "Answer in natural, simple Marathi (मराठी). Use English only for necessary medical terms.",
-    "Gujarati": "Answer in natural, simple Gujarati (ગુજરાતી). Use English only for necessary medical terms.",
-    "Punjabi": "Answer in natural, simple Punjabi (ਪੰਜਾਬੀ). Use English only for necessary medical terms.",
-    "Urdu": "Answer in natural, simple Urdu (اردو). Use English only for necessary medical terms.",
+
+    "English": "Answer in simple English.",
+
+    "Telugu": "Answer in natural Telugu.",
+
+    "Hindi": "Answer in natural Hindi.",
+
+    "Tamil": "Answer in natural Tamil.",
+
+    "Kannada": "Answer in natural Kannada.",
+
+    "Malayalam": "Answer in natural Malayalam.",
+
+    "Bengali": "Answer in natural Bengali.",
+
+    "Marathi": "Answer in natural Marathi.",
+
+    "Gujarati": "Answer in natural Gujarati.",
+
+    "Punjabi": "Answer in natural Punjabi.",
+
+    "Urdu": "Answer in natural Urdu."
 }
-
-
-# ============================================================
-# LOAD MRI MODEL
-# ============================================================
-
-print("=" * 65)
-print("INTELLIGENT MRI IMAGE ANALYSIS SYSTEM")
-print("=" * 65)
-
-predictor = None
-
-try:
-    predictor = MRIPredictor()
-    print("MRI model loaded successfully.")
-
-    try:
-        print("Classes:", predictor.class_names)
-    except Exception:
-        pass
-
-except Exception as error:
-    print("MRI model loading error:", error)
 
 
 # ============================================================
@@ -152,16 +217,17 @@ except Exception as error:
 # ============================================================
 
 def allowed_file(filename):
-    """Check whether the uploaded image has an allowed extension."""
 
     if not filename or "." not in filename:
         return False
 
-    return filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    extension = filename.rsplit(".", 1)[1].lower()
+
+    return extension in ALLOWED_EXTENSIONS
 
 
-# Integrated error-rendering function supplied by you.
 def render_result_error(message, status_code=400):
+
     return render_template(
         "result.html",
         error=message,
@@ -169,8 +235,96 @@ def render_result_error(message, status_code=400):
         prediction=None,
         confidence=0,
         probabilities={},
-        analysis_id=None,
+        analysis_id=None
     ), status_code
+
+
+def normalize_dashboard_data(data):
+    """
+    Normalize dashboard data returned by dashboard_db.py.
+
+    Supports:
+    - Dictionary
+    - Tuple containing a dictionary
+    - Tuple containing stats and additional data
+    """
+
+    if isinstance(data, dict):
+
+        dashboard_data = data.copy()
+
+    elif isinstance(data, tuple):
+
+        dictionaries = [
+            item for item in data
+            if isinstance(item, dict)
+        ]
+
+        if not dictionaries:
+
+            raise TypeError(
+                "get_dashboard_data() returned a tuple "
+                "without a dictionary."
+            )
+
+        dashboard_data = {}
+
+        for item in dictionaries:
+            dashboard_data.update(item)
+
+    else:
+
+        raise TypeError(
+            "Unexpected dashboard data type: "
+            + type(data).__name__
+        )
+
+    stats = dashboard_data.get("stats", {})
+
+    if not isinstance(stats, dict):
+
+        stats = {}
+
+    # Support dashboard functions that return statistics
+    # directly rather than inside a "stats" dictionary.
+
+    if not stats:
+
+        possible_keys = (
+            "patients",
+            "total_patients",
+            "scans",
+            "total_scans",
+            "predictions",
+            "total_predictions"
+        )
+
+        stats = {
+            key: dashboard_data[key]
+            for key in possible_keys
+            if key in dashboard_data
+        }
+
+    dashboard_data["stats"] = stats
+
+    return dashboard_data
+
+
+def get_safe_dashboard_data():
+
+    try:
+
+        raw_data = get_dashboard_data()
+
+        return normalize_dashboard_data(raw_data)
+
+    except Exception:
+
+        logger.exception(
+            "Could not retrieve dashboard data."
+        )
+
+        raise
 
 
 # ============================================================
@@ -179,19 +333,30 @@ def render_result_error(message, status_code=400):
 
 @app.route("/roles")
 def role_selection():
+
     return render_template("role_selection.html")
 
 
 @app.route("/open-scanner/<role>")
 def open_scanner(role):
-    allowed_roles = {"doctor", "admin", "patient"}
+
+    allowed_roles = {
+        "doctor",
+        "admin",
+        "patient"
+    }
 
     if role not in allowed_roles:
-        return redirect(url_for("role_selection"))
+
+        return redirect(
+            url_for("role_selection")
+        )
 
     session["selected_role"] = role
 
-    return redirect(url_for("index"))
+    return redirect(
+        url_for("index")
+    )
 
 
 # ============================================================
@@ -200,6 +365,7 @@ def open_scanner(role):
 
 @app.route("/")
 def index():
+
     return render_template("index.html")
 
 
@@ -209,124 +375,215 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    # Validate patient details submitted by templates/index.html.
-    patient_name = request.form.get("patient_name", "").strip()
-    patient_code = request.form.get("patient_code", "").strip()
-    patient_age_text = request.form.get("patient_age", "").strip()
 
-    if not patient_name or not patient_code or not patient_age_text:
+    patient_name = request.form.get(
+        "patient_name", ""
+    ).strip()
+
+    patient_code = request.form.get(
+        "patient_code", ""
+    ).strip()
+
+    patient_age_text = request.form.get(
+        "patient_age", ""
+    ).strip()
+
+    if not all([
+        patient_name,
+        patient_code,
+        patient_age_text
+    ]):
+
         return render_result_error(
-            "Please enter patient name, patient code, and age.", 400
+            "Please enter all patient details.",
+            400
         )
 
     if len(patient_name) > 100 or len(patient_code) > 50:
+
         return render_result_error(
-            "Patient name or patient code is too long.", 400
+            "Patient details are too long.",
+            400
         )
 
     try:
+
         patient_age = int(patient_age_text)
+
         if not 1 <= patient_age <= 120:
-            raise ValueError("Age must be between 1 and 120.")
+            raise ValueError
+
     except (ValueError, TypeError):
-        return render_result_error("Please enter a valid patient age.", 400)
+
+        return render_result_error(
+            "Enter a valid patient age.",
+            400
+        )
 
     if predictor is None:
+
         return render_result_error(
-            "MRI model could not be loaded. Check the model file and terminal.",
-            503,
+            "MRI model is not available.",
+            503
         )
 
     if "mri_image" not in request.files:
-        return render_result_error("No MRI image was uploaded.", 400)
+
+        return render_result_error(
+            "No MRI image was uploaded.",
+            400
+        )
 
     uploaded_file = request.files["mri_image"]
 
     if not uploaded_file.filename:
-        return render_result_error("Please select an MRI image.", 400)
+
+        return render_result_error(
+            "Please select an MRI image.",
+            400
+        )
 
     if not allowed_file(uploaded_file.filename):
+
         return render_result_error(
-            "Invalid format. Upload JPG, JPEG, PNG, BMP or WEBP.", 400
+            "Unsupported image format.",
+            400
         )
 
-    safe_filename = secure_filename(uploaded_file.filename)
+    safe_filename = secure_filename(
+        uploaded_file.filename
+    )
+
     if not safe_filename:
-        return render_result_error("Invalid filename.", 400)
 
-    # Make the filename unique to avoid overwriting an earlier scan.
-    stem, extension = os.path.splitext(safe_filename)
-    filename = f"{stem}_{os.urandom(6).hex()}{extension.lower()}"
-
-    try:
-        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-        image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        uploaded_file.save(image_path)
-    except OSError as error:
-        print("Image upload error:", error)
         return render_result_error(
-            "Could not save the uploaded MRI image.", 500
+            "Invalid image filename.",
+            400
         )
 
+    stem, extension = os.path.splitext(
+        safe_filename
+    )
+
+    filename = (
+        f"{stem}_{os.urandom(6).hex()}"
+        f"{extension.lower()}"
+    )
+
+    image_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
+
     try:
+
+        uploaded_file.save(image_path)
+
         result = predictor.predict(image_path)
 
         if not isinstance(result, dict):
-            return render_result_error(
-                "The MRI model returned an invalid result.", 500
+
+            raise TypeError(
+                "Invalid prediction result."
             )
 
-        prediction_label = result.get("prediction", "Unknown")
-        probabilities = result.get("probabilities", {})
+        prediction_label = result.get(
+            "prediction",
+            "Unknown"
+        )
 
-        try:
-            confidence = round(float(result.get("confidence", 0)), 2)
-        except (ValueError, TypeError):
-            confidence = 0
+        probabilities = result.get(
+            "probabilities",
+            {}
+        )
 
         if not isinstance(probabilities, dict):
+
             probabilities = {}
 
-        # Save patient and analysis records after prediction succeeds.
-        # The column names must match src/dashboard_db.py's database schema.
-        os.makedirs(DATABASE_DIR, exist_ok=True)
+        try:
+
+            confidence = round(
+                float(result.get("confidence", 0)),
+                2
+            )
+
+        except (ValueError, TypeError):
+
+            confidence = 0
+
+        # Save patient and analysis details.
+
         connection = sqlite3.connect(DB_PATH)
+
         connection.row_factory = sqlite3.Row
 
         try:
-            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            now = datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             patient = connection.execute(
-                "SELECT id FROM patients WHERE patient_code = ?",
-                (patient_code,),
+                """
+                SELECT id
+                FROM patients
+                WHERE patient_code = ?
+                """,
+                (patient_code,)
             ).fetchone()
 
             if patient:
+
                 patient_id = patient["id"]
+
                 connection.execute(
                     """
                     UPDATE patients
                     SET name = ?, age = ?
                     WHERE id = ?
                     """,
-                    (patient_name, patient_age, patient_id),
+                    (
+                        patient_name,
+                        patient_age,
+                        patient_id
+                    )
                 )
+
             else:
+
                 cursor = connection.execute(
                     """
                     INSERT INTO patients
-                        (patient_code, name, age, created_at)
+                    (
+                        patient_code,
+                        name,
+                        age,
+                        created_at
+                    )
                     VALUES (?, ?, ?, ?)
                     """,
-                    (patient_code, patient_name, patient_age, now),
+                    (
+                        patient_code,
+                        patient_name,
+                        patient_age,
+                        now
+                    )
                 )
+
                 patient_id = cursor.lastrowid
 
             cursor = connection.execute(
                 """
                 INSERT INTO analyses
-                    (patient_id, image_filename, prediction,
-                     confidence, probabilities, analysis_date)
+                (
+                    patient_id,
+                    image_filename,
+                    prediction,
+                    confidence,
+                    probabilities,
+                    analysis_date
+                )
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -335,25 +592,29 @@ def predict():
                     str(prediction_label),
                     confidence,
                     json.dumps(probabilities),
-                    now,
-                ),
+                    now
+                )
             )
+
             analysis_id = cursor.lastrowid
+
             connection.commit()
 
         except Exception:
+
             connection.rollback()
+
             raise
+
         finally:
+
             connection.close()
 
-        print("=" * 65)
-        print("MRI PREDICTION RESULT")
-        print("Patient code:", patient_code)
-        print("Prediction:", prediction_label)
-        print("Confidence:", confidence, "%")
-        print("Analysis ID:", analysis_id)
-        print("=" * 65)
+        logger.info(
+            "MRI analysis saved. Patient: %s, Analysis: %s",
+            patient_code,
+            analysis_id
+        )
 
         return render_template(
             "result.html",
@@ -363,19 +624,21 @@ def predict():
             probabilities=probabilities,
             analysis_id=analysis_id,
             error=None,
-            selected_role=session.get("selected_role", "patient"),
+            selected_role=session.get(
+                "selected_role",
+                "patient"
+            )
         )
 
-    except Exception as error:
-        print(
-            "MRI prediction/database error:",
-            type(error).__name__,
-            str(error),
+    except Exception:
+
+        logger.exception(
+            "MRI prediction or database error."
         )
+
         return render_result_error(
-            "An error occurred while analyzing the MRI image or saving its record. "
-            "Check the terminal for details.",
-            500,
+            "MRI analysis failed. Please check server logs.",
+            500
         )
 
 
@@ -387,6 +650,7 @@ def predict():
 def chat():
 
     if request.method == "GET":
+
         return render_template(
             "chat.html",
             prediction="Unknown",
@@ -394,26 +658,31 @@ def chat():
             language="English",
             question="",
             response=None,
-            error=None,
+            error=None
         )
 
     prediction_label = request.form.get(
-        "prediction", "Unknown"
+        "prediction",
+        "Unknown"
     ).strip()
 
     confidence = request.form.get(
-        "confidence", "0"
+        "confidence",
+        "0"
     ).strip()
 
     language = request.form.get(
-        "language", "English"
+        "language",
+        "English"
     ).strip()
 
     question = request.form.get(
-        "question", ""
+        "question",
+        ""
     ).strip()
 
     if language not in SUPPORTED_LANGUAGES:
+
         language = "English"
 
     template_data = {
@@ -422,98 +691,105 @@ def chat():
         "language": language,
         "question": question,
         "response": None,
-        "error": None,
+        "error": None
     }
 
     if groq_client is None:
+
         template_data["error"] = (
             "Groq AI is not configured. "
-            "Check GROQ_API_KEY in your .env file."
+            "Check the GROQ_API_KEY environment variable."
         )
 
-        return render_template("chat.html", **template_data)
+        return render_template(
+            "chat.html",
+            **template_data
+        )
 
     if not question:
-        template_data["error"] = "Please enter a question."
 
-        return render_template("chat.html", **template_data)
+        template_data["error"] = (
+            "Please enter a question."
+        )
+
+        return render_template(
+            "chat.html",
+            **template_data
+        )
 
     language_instruction = LANGUAGE_INSTRUCTIONS.get(
         language,
-        LANGUAGE_INSTRUCTIONS["English"],
+        LANGUAGE_INSTRUCTIONS["English"]
     )
 
     system_prompt = f"""
 You are an educational MRI AI assistant.
 
-Application model prediction: {prediction_label}
+Application prediction: {prediction_label}
 Model confidence: {confidence}%
-Selected response language: {language}
 
-LANGUAGE REQUIREMENT:
+LANGUAGE:
 {language_instruction}
 
-Respond in the selected language even if the question
-is written in another language. Use simple language.
+Respond in the selected language.
 
 MEDICAL SAFETY:
-- An AI classification is not a confirmed diagnosis.
-- Do not claim the patient definitely has or does not
-  have a disease based only on the prediction.
-- Do not prescribe medicines or dosages.
-- Do not advise starting or stopping medication.
-- Give educational information, not a replacement for
-  advice from a qualified healthcare professional.
-- Recommend professional medical evaluation.
-- For severe or emergency symptoms, recommend urgent care.
-- Avoid unsupported claims and unnecessary alarm.
-- Answer the question directly and concisely.
+
+1. AI predictions are not confirmed diagnoses.
+2. Do not prescribe medicines or dosages.
+3. Do not advise starting or stopping medication.
+4. Explain MRI concepts in simple language.
+5. Recommend evaluation by a qualified radiologist.
+6. For emergency symptoms, recommend urgent medical care.
+7. Never create unnecessary fear.
 """
 
     try:
+
         completion = groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
                 {
                     "role": "system",
-                    "content": system_prompt,
+                    "content": system_prompt
                 },
                 {
                     "role": "user",
-                    "content": question,
-                },
+                    "content": question
+                }
             ],
             temperature=0.2,
-            max_completion_tokens=1200,
+            max_completion_tokens=1200
         )
 
         response = ""
 
         if completion.choices:
+
             response = (
-                completion.choices[0].message.content or ""
+                completion.choices[0].message.content
+                or ""
             )
 
         template_data["response"] = (
             response.strip()
-            or "The AI assistant did not return a response. Please try again."
+            or "Please try asking your question again."
         )
 
-        return render_template("chat.html", **template_data)
+    except Exception:
 
-    except Exception as error:
-        print(
-            "Groq chatbot error:",
-            type(error).__name__,
-            str(error),
+        logger.exception(
+            "Groq chatbot error."
         )
 
         template_data["error"] = (
-            "The AI assistant could not generate a response. "
-            "Check the terminal for details."
+            "The AI assistant could not generate a response."
         )
 
-        return render_template("chat.html", **template_data)
+    return render_template(
+        "chat.html",
+        **template_data
+    )
 
 
 # ============================================================
@@ -524,24 +800,29 @@ MEDICAL SAFETY:
 def dashboard():
 
     try:
-        dashboard_data = get_dashboard_data()
+
+        dashboard_data = get_safe_dashboard_data()
+
+        stats = dashboard_data.get(
+            "stats",
+            {}
+        )
 
         return render_template(
             "dashboard.html",
             dashboard_data=dashboard_data,
-            stats=dashboard_data.get("stats", {}),
+            stats=stats
         )
 
-    except Exception as error:
-        print(
-            "Dashboard error:",
-            type(error).__name__,
-            str(error),
+    except Exception:
+
+        logger.exception(
+            "Dashboard loading failed."
         )
 
         flash(
-            "Could not load dashboard data. Check the terminal and database.",
-            "error",
+            "Could not load dashboard data.",
+            "error"
         )
 
         return render_template(
@@ -551,7 +832,10 @@ def dashboard():
                 "patients": 0,
                 "scans": 0,
                 "predictions": 0,
-            },
+                "total_patients": 0,
+                "total_scans": 0,
+                "total_predictions": 0
+            }
         ), 500
 
 
@@ -561,26 +845,29 @@ def dashboard():
 
 @app.route("/patients")
 def patients():
-    """Display patients and their latest MRI analysis."""
 
     if not os.path.isfile(DB_PATH):
+
         flash(
-            "Patient database was not found. Check your database configuration.",
-            "error",
+            "Patient database was not found.",
+            "error"
         )
 
         return render_template(
             "patients.html",
-            patients=[],
+            patients=[]
         ), 500
 
     connection = None
 
     try:
+
         connection = sqlite3.connect(DB_PATH)
+
         connection.row_factory = sqlite3.Row
 
-        sql = """
+        rows = connection.execute(
+            """
             SELECT
                 p.id AS patient_id,
                 p.patient_code,
@@ -589,47 +876,51 @@ def patients():
                 p.created_at,
                 COUNT(a.id) AS total_scans,
                 MAX(a.analysis_date) AS last_analysis
+
             FROM patients AS p
+
             LEFT JOIN analyses AS a
                 ON a.patient_id = p.id
+
             GROUP BY
                 p.id,
                 p.patient_code,
                 p.name,
                 p.age,
                 p.created_at
-            ORDER BY p.id DESC
-        """
 
-        rows = connection.execute(sql).fetchall()
+            ORDER BY p.id DESC
+            """
+        ).fetchall()
 
         patient_list = [
-            dict(row) for row in rows
+            dict(row)
+            for row in rows
         ]
 
         return render_template(
             "patients.html",
-            patients=patient_list,
+            patients=patient_list
         )
 
-    except sqlite3.Error as error:
-        print(
-            "Patients database error:",
-            type(error).__name__,
-            str(error),
+    except Exception:
+
+        logger.exception(
+            "Patient list loading failed."
         )
 
         flash(
-            "Could not load patients. Check the database schema.",
-            "error",
+            "Could not load patient records.",
+            "error"
         )
 
         return render_template(
             "patients.html",
-            patients=[],
+            patients=[]
         ), 500
 
     finally:
+
         if connection is not None:
             connection.close()
 
@@ -642,24 +933,40 @@ def patients():
 def patient_details(patient_id):
 
     try:
+
         patient = get_patient(patient_id)
 
+        if isinstance(patient, tuple):
+
+            dictionaries = [
+                item for item in patient
+                if isinstance(item, dict)
+            ]
+
+            if dictionaries:
+                patient = dictionaries[0]
+
+        if isinstance(patient, sqlite3.Row):
+
+            patient = dict(patient)
+
         if not patient:
+
             abort(404)
 
         return render_template(
             "patient.html",
-            patient=patient,
+            patient=patient
         )
 
     except HTTPException:
+
         raise
 
-    except Exception as error:
-        print(
-            "Patient lookup error:",
-            type(error).__name__,
-            str(error),
+    except Exception:
+
+        logger.exception(
+            "Patient details loading failed."
         )
 
         abort(500)
@@ -673,24 +980,40 @@ def patient_details(patient_id):
 def analysis_details(analysis_id):
 
     try:
+
         analysis = get_analysis(analysis_id)
 
+        if isinstance(analysis, tuple):
+
+            dictionaries = [
+                item for item in analysis
+                if isinstance(item, dict)
+            ]
+
+            if dictionaries:
+                analysis = dictionaries[0]
+
+        if isinstance(analysis, sqlite3.Row):
+
+            analysis = dict(analysis)
+
         if not analysis:
+
             abort(404)
 
         return render_template(
             "analysis.html",
-            analysis=analysis,
+            analysis=analysis
         )
 
     except HTTPException:
+
         raise
 
-    except Exception as error:
-        print(
-            "Analysis lookup error:",
-            type(error).__name__,
-            str(error),
+    except Exception:
+
+        logger.exception(
+            "Analysis details loading failed."
         )
 
         abort(500)
@@ -702,74 +1025,74 @@ def analysis_details(analysis_id):
 
 @app.route("/report/<int:analysis_id>")
 def download_report(analysis_id):
-    """Generate and download a PDF report for a saved MRI analysis.
 
-    Supports either an in-memory file object (such as BytesIO) or a PDF
-    file path returned by generate_pdf_report().
-    """
     try:
+
         analysis = get_analysis(analysis_id)
 
         if not analysis:
+
             return "Analysis not found.", 404
 
-        # Pass the analysis record to the report generator.
-        pdf_output = generate_pdf_report(analysis)
+        pdf_output = generate_pdf_report(
+            analysis
+        )
 
         if pdf_output is None:
-            app.logger.error(
-                "PDF generator returned no output for analysis %s",
-                analysis_id,
-            )
+
             return "PDF report could not be generated.", 500
 
-        # Handle an in-memory PDF (for example, io.BytesIO).
-        if hasattr(pdf_output, "seek") and hasattr(pdf_output, "read"):
+        if hasattr(pdf_output, "read"):
+
             pdf_output.seek(0)
+
             return send_file(
                 pdf_output,
                 mimetype="application/pdf",
                 as_attachment=True,
-                download_name=f"MRI_Report_{analysis_id}.pdf",
+                download_name=f"MRI_Report_{analysis_id}.pdf"
             )
 
-        # Handle a PDF saved to a file path.
-        if isinstance(pdf_output, (str, bytes, os.PathLike)):
-            pdf_path = os.fsdecode(pdf_output)
+        if isinstance(
+            pdf_output,
+            (str, bytes, os.PathLike)
+        ):
+
+            pdf_path = os.fsdecode(
+                pdf_output
+            )
 
             if not os.path.isabs(pdf_path):
-                pdf_path = os.path.join(BASE_DIR, pdf_path)
+
+                pdf_path = os.path.join(
+                    BASE_DIR,
+                    pdf_path
+                )
 
             if not os.path.isfile(pdf_path):
-                app.logger.error(
-                    "Generated PDF file was not found: %s",
-                    pdf_path,
-                )
-                return "PDF file was not found.", 500
+
+                return "PDF file not found.", 500
 
             return send_file(
                 pdf_path,
                 mimetype="application/pdf",
                 as_attachment=True,
-                download_name=f"MRI_Report_{analysis_id}.pdf",
+                download_name=f"MRI_Report_{analysis_id}.pdf"
             )
 
-        app.logger.error(
-            "Unsupported PDF output type for analysis %s: %s",
-            analysis_id,
-            type(pdf_output).__name__,
-        )
         return "Unsupported PDF report format.", 500
 
     except HTTPException:
+
         raise
 
     except Exception:
-        app.logger.exception(
-            "PDF report download failed for analysis %s",
-            analysis_id,
+
+        logger.exception(
+            "PDF report generation failed."
         )
-        return "PDF download failed. Check the Flask terminal.", 500
+
+        return "PDF report generation failed.", 500
 
 
 # ============================================================
@@ -782,28 +1105,32 @@ def health():
     classes = []
 
     if predictor is not None:
-        try:
-            classes = predictor.class_names
-        except Exception:
-            pass
 
-    status_code = 200 if predictor is not None else 503
+        classes = getattr(
+            predictor,
+            "class_names",
+            []
+        )
+
+    model_status = (
+        "loaded"
+        if predictor is not None
+        else "not loaded"
+    )
+
+    chatbot_status = (
+        "configured"
+        if groq_client is not None
+        else "not configured"
+    )
 
     return {
         "status": "running",
-        "model": (
-            "loaded"
-            if predictor is not None
-            else "not loaded"
-        ),
+        "model": model_status,
         "classes": classes,
-        "chatbot": (
-            "configured"
-            if groq_client is not None
-            else "not configured"
-        ),
-        "groq_model": GROQ_MODEL,
-    }, status_code
+        "chatbot": chatbot_status,
+        "groq_model": GROQ_MODEL
+    }, 200
 
 
 # ============================================================
@@ -812,51 +1139,64 @@ def health():
 
 @app.errorhandler(413)
 def file_too_large(error):
+
     return render_result_error(
-        "The uploaded MRI image is too large. Maximum size is 16 MB.",
-        413,
+        "MRI image exceeds the 16 MB upload limit.",
+        413
     )
 
 
 @app.errorhandler(404)
 def page_not_found(error):
+
     return render_result_error(
-        "The requested page was not found.",
-        404,
+        "Requested page was not found.",
+        404
     )
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
+
     return render_result_error(
-        "An internal server error occurred. Please check the terminal.",
-        500,
+        "An internal server error occurred. Please check the server logs.",
+        500
     )
 
 
 # ============================================================
-# START APPLICATION
+# APPLICATION START
 # ============================================================
 
 if __name__ == "__main__":
 
-    print()
     print("=" * 65)
-    print("Starting Flask MRI Analysis System...")
+
+    print(
+        "UNIFIED DEEP LEARNING FRAMEWORK "
+        "FOR INTELLIGENT MRI IMAGE ANALYSIS"
+    )
+
+    print("=" * 65)
+
     print(
         "MRI model:",
-        "Loaded" if predictor is not None else "Not loaded",
+        "Loaded" if predictor is not None else "Not loaded"
     )
+
     print(
         "Groq chatbot:",
-        "Ready" if groq_client is not None else "Not configured",
+        "Ready" if groq_client is not None else "Not configured"
     )
+
     print("Groq model:", GROQ_MODEL)
-    print("Open http://127.0.0.1:5000")
+
+    print("Database:", DB_PATH)
+
     print("=" * 65)
 
     app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=False
     )
