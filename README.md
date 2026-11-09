@@ -164,7 +164,7 @@ SQLite provides a lightweight database solution that can be integrated directly 
 
 ## Team Members and Contributions
 
-This project was developed collaboratively by a team of four members. Each member contributed to different stages of the development process, including model development, image processing, web application development, database integration, and testing.
+This project was developed collaboratively by a team of three members. Each member contributed to different stages of the development process, including model development, image processing, web application development, database integration, and testing.
 
 
 ### Acknowledgement
